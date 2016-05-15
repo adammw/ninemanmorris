@@ -110,6 +110,7 @@ public class Board {
      * Perform a move
      * @param move the move to perform
      * @param player the player performing the move
+     * @param millFormedCallback a callback to be called if a mill is formed
      */
     public void performMove(Move move, Player player, MillFormedCallback millFormedCallback) throws IllegalMoveException {
         Piece piece;
@@ -132,9 +133,6 @@ public class Board {
             if (!allowRemoval && piece.getOwner() != player) {
                 throw new IllegalMoveException("Can't move another player's piece");
             }
-            if (allowRemoval && piece.getOwner() == player) {
-                throw new IllegalMoveException("Can't remove your own piece");
-            }
             if (prevLocation.equals(newLocation)) {
                 throw new IllegalMoveException("Must move a piece");
             }
@@ -148,6 +146,11 @@ public class Board {
         // Ensure if placing or moving, that the piece doesn't already exist at that location
         if (newLocation != null && getPieceAt(newLocation) != null) {
             throw new IllegalMoveException("Piece already placed there");
+        }
+
+        // Ensure you can't remove your own piece if a mill is formed
+        if (newLocation == null && piece.getOwner() == player) {
+            throw new IllegalMoveException("Can't remove your own piece");
         }
 
         // Remove the old piece from the board and add it to it's new location

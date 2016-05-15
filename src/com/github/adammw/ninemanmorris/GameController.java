@@ -37,14 +37,29 @@ public class GameController {
      */
     public void playGame() {
         do {
+            // Notify the view who the current player is
             Player currentPlayer = getCurrentPlayer();
             view.notifyCurrentPlayer(currentPlayer, currentPlayerIdx);
+
+            // When a mill is formed, prompt the player for which piece to remove continually until valid
+            Board.MillFormedCallback millFormedCallback = () -> {
+                boolean validMove;
+                do {
+                    try {
+                        Move millRemovalMove = currentPlayer.getPieceToRemove(board);
+                        board.performMove(millRemovalMove, currentPlayer, null);
+                        validMove = true;
+                    } catch (Board.IllegalMoveException ex) {
+                        view.displayError(ex);
+                        validMove = false;
+                    }
+                } while(!validMove);
+            };
+
+            // Prompt the player for a move
             try {
                 Move move = currentPlayer.getMove(board);
-                board.performMove(move, currentPlayer, () -> {
-                    // TODO: piece removal
-                    System.out.println("mill formed!!!");
-                });
+                board.performMove(move, currentPlayer, millFormedCallback);
                 currentPlayerIdx = (currentPlayerIdx + 1) % players.length;
             } catch(Board.IllegalMoveException ex) {
                 view.displayError(ex);
@@ -55,11 +70,28 @@ public class GameController {
     /**
      * Ask the current interface for a move from the end-user
      * @param board the board representation to display as the current state of the game
+     * @param player the player who's move is being asked for
      * @return the user's chosen move
      */
     public Move getMoveFromUser(Board board, HumanPlayer player) {
         try {
             return view.getMoveFromUser(board, player);
+        } catch(Exception ex) {
+            System.err.println(ex);
+            System.exit(1);
+            return null;
+        }
+    }
+
+    /**
+     * Ask the current interface for which piece to remove from the end-user
+     * @param board the board representation to display as the current state of the game
+     * @param player the player who's move is being asked for
+     * @return the user's chosen move
+     */
+    public Move getPieceToRemoveFromUser(Board board, HumanPlayer player) {
+        try {
+            return view.getPieceToRemoveFromUser(board, player);
         } catch(Exception ex) {
             System.err.println(ex);
             System.exit(1);

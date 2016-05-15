@@ -11,4 +11,6 @@ public abstract class Player {
     }
 
     abstract Move getMove(Board board);
+
+    abstract Move getPieceToRemove(Board board);
 }

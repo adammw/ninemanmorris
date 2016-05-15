@@ -20,4 +20,13 @@ public class HumanPlayer extends Player {
     public Move getMove(Board board) {
         return controller.getMoveFromUser(board, this);
     }
+
+    /**
+     * Get which piece to remove for the human player
+     * @param board the current board state
+     * @return a move containing the piece to remove from by the end-user
+     */
+    public Move getPieceToRemove(Board board) {
+        return controller.getPieceToRemoveFromUser(board, this);
+    }
 }
