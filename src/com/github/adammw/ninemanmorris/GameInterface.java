@@ -51,25 +51,29 @@ public class GameInterface {
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         BoardLocation fromPosition = null;
         BoardLocation toPosition = null;
-
-        try {
-            switch (board.getStage(player)) {
-                case PLACING:
-                    System.out.println("Where do you want to place your piece? (a1 - g7)");
-                    toPosition = new BoardLocation(in.readLine());
-                    break;
-                case MOVING:
-                case FLYING:
-                    System.out.println("Move piece");
-                    System.out.print("FROM: ");
-                    fromPosition = new BoardLocation(in.readLine());
-                    System.out.print("TO: ");
-                    toPosition = new BoardLocation(in.readLine());
-                    break;
+        boolean valid;
+        do {
+            try {
+                switch (board.getStage(player)) {
+                    case PLACING:
+                        System.out.println("Where do you want to place your piece? (a1 - g7)");
+                        toPosition = new BoardLocation(in.readLine());
+                        break;
+                    case MOVING:
+                    case FLYING:
+                        System.out.println("Move piece");
+                        System.out.print("FROM: ");
+                        fromPosition = new BoardLocation(in.readLine());
+                        System.out.print("TO: ");
+                        toPosition = new BoardLocation(in.readLine());
+                        break;
+                }
+                valid = true;
+            } catch (BoardLocation.InvalidLocationException ex) {
+                System.err.println("Invalid location");
+                valid = false;
             }
-        } catch(BoardLocation.InvalidLocationException ex) {
-            System.err.println("Invalid location");
-        }
+        } while(!valid);
 
         return new Move(fromPosition, toPosition);
     }
