@@ -17,7 +17,7 @@ public class HumanPlayer extends Player {
      * @param board the current game board state
      * @return a move returned by the end-user
      */
-    Move getMove(Board board) {
-        return controller.getMoveFromUser(board);
+    public Move getMove(Board board) {
+        return controller.getMoveFromUser(board, this);
     }
 }

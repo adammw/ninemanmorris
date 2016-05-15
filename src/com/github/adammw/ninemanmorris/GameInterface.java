@@ -45,7 +45,7 @@ public class GameInterface {
         return new GameParams(readPlayerType(1), readPlayerType(2));
     }
 
-    public Move getMoveFromUser(Board board) throws Exception {
+    public Move getMoveFromUser(Board board, HumanPlayer player) throws Exception {
         displayGameState(board);
 
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -53,7 +53,7 @@ public class GameInterface {
         BoardLocation toPosition = null;
 
         try {
-            switch (board.getStage()) {
+            switch (board.getStage(player)) {
                 case PLACING:
                     System.out.println("Where do you want to place your piece? (a1 - g7)");
                     toPosition = new BoardLocation(in.readLine());

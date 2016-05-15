@@ -25,7 +25,7 @@ public class GameController {
                     .toArray(Player[]::new);
 
             // Create the board model
-            this.board = new Board(players);
+            this.board = new Board(this.players);
         } catch(Exception ex) {
             System.err.println(ex);
             System.exit(1);
@@ -37,11 +37,14 @@ public class GameController {
      */
     public void playGame() {
         do {
-            Player currentPlayer = players[currentPlayerIdx];
+            Player currentPlayer = getCurrentPlayer();
             view.notifyCurrentPlayer(currentPlayer, currentPlayerIdx);
             try {
                 Move move = currentPlayer.getMove(board);
-                board.performMove(move, currentPlayer);
+                board.performMove(move, currentPlayer, () -> {
+                    // TODO: piece removal
+                    System.out.println("mill formed!!!");
+                });
                 currentPlayerIdx = (currentPlayerIdx + 1) % players.length;
             } catch(Board.MoveException ex) {
                 view.displayError(ex);
@@ -54,13 +57,29 @@ public class GameController {
      * @param board the board representation to display as the current state of the game
      * @return the user's chosen move
      */
-    public Move getMoveFromUser(Board board) {
+    public Move getMoveFromUser(Board board, HumanPlayer player) {
         try {
-            return view.getMoveFromUser(board);
+            return view.getMoveFromUser(board, player);
         } catch(Exception ex) {
             System.err.println(ex);
             System.exit(1);
             return null;
         }
+    }
+
+    /**
+     * Get the players in the game
+     * @return array of player objects
+     */
+    public Player[] getPlayers() {
+        return players;
+    }
+
+    /**
+     * Get the current player
+     * @return player object for the current player
+     */
+    public Player getCurrentPlayer() {
+        return players[currentPlayerIdx];
     }
 }
