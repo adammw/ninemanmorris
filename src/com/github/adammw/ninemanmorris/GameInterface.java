@@ -10,20 +10,21 @@ import java.util.stream.Stream;
  * Interfaces with the user to provide a graphical representation of the game and solicit input from the user
  */
 public class GameInterface {
+    private static final boolean USE_EMOJI = false;
     public static final String[][] BOARD_LINES = {
-            {"▢━","━━","━━","▢━","━━", "━━", "▢"},
-            {"┃ ","  ","  ","┃ ","  ", "  ", "┃ "},
-            {"┃ ","▢━","━━","▢━","━━", "▢ ", "┃ "},
-            {"┃ ","┃ ","  ","┃ ","  ", "┃ ", "┃ "},
-            {"┃ ","┃ ","▢━","▢━","▢ ", "┃ ", "┃ "},
-            {"┃ ","┃ ","┃ ","  ","┃ ", "┃ ", "┃ "},
-            {"▢━","▢━","▢ ","  ","▢━", "▢━", "▢"},
-            {"┃ ","┃ ","┃ ","  ","┃ ", "┃ ", "┃ "},
-            {"┃ ","┃ ","▢━","▢━","▢ ", "┃ ", "┃ "},
-            {"┃ ","┃ ","  ","┃ ","  ", "┃ ", "┃ "},
-            {"┃ ","▢━","━━","▢━","━━", "▢ ", "┃ "},
-            {"┃ ","  ","  ","┃ ","  ", "  ", "┃ "},
-            {"▢━","━━","━━","▢━","━━", "━━", "▢"},
+            {"◦─","──","──","◦─","──", "──", "◦"},
+            {"│ ","  ","  ","│ ","  ", "  ", "│ "},
+            {"│ ","◦─","──","◦─","──", "◦ ", "│ "},
+            {"│ ","│ ","  ","│ ","  ", "│ ", "│ "},
+            {"│ ","│ ","◦─","◦─","◦ ", "│ ", "│ "},
+            {"│ ","│ ","│ ","  ","│ ", "│ ", "│ "},
+            {"◦─","◦─","◦ ","  ","◦─", "◦─", "◦"},
+            {"│ ","│ ","│ ","  ","│ ", "│ ", "│ "},
+            {"│ ","│ ","◦─","◦─","◦ ", "│ ", "│ "},
+            {"│ ","│ ","  ","│ ","  ", "│ ", "│ "},
+            {"│ ","◦─","──","◦─","──", "◦ ", "│ "},
+            {"│ ","  ","  ","│ ","  ", "  ", "│ "},
+            {"◦─","──","──","◦─","──", "──", "◦"},
     };
 
     public class GameParams {
@@ -85,7 +86,7 @@ public class GameInterface {
                 if (Board.VALID_LOCATIONS[y][x]) {
                     Piece piece = board.getPieceAt(x, y);
                     System.out.print(displayPiece(piece, board));
-                    System.out.print(BOARD_LINES[2*y][x].substring(1));
+                    System.out.print((!USE_EMOJI || piece == null) ? BOARD_LINES[2*y][x].substring(1) : " ");
                 } else {
                     System.out.print(BOARD_LINES[2 * y][x]);
                 }
@@ -106,12 +107,12 @@ public class GameInterface {
 
     private String displayPiece(Piece piece, Board board) {
         if (piece == null) {
-            return "▢";
+            return "◦";
         } else {
             if (piece.getOwner() == board.getPlayer(0)) {
-                return "●";
+                return USE_EMOJI ?  "⚫" : "●";
             } else {
-                return "○";
+                return USE_EMOJI ? "⚪" : "○";
             }
         }
     }
