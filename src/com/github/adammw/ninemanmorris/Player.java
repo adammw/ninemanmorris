@@ -9,4 +9,6 @@ public abstract class Player {
     public Player(GameController controller) {
         this.controller = controller;
     }
+
+    abstract Move getMove(Board board);
 }

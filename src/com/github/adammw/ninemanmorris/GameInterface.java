@@ -3,7 +3,6 @@ package com.github.adammw.ninemanmorris;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -11,13 +10,28 @@ import java.util.stream.Stream;
  * Interfaces with the user to provide a graphical representation of the game and solicit input from the user
  */
 public class GameInterface {
-    public class GameParams {
-        PlayerType player1Type;
-        PlayerType player2Type;
+    public static final String[][] BOARD_LINES = {
+            {"▢━","━━","━━","▢━","━━", "━━", "▢"},
+            {"┃ ","  ","  ","┃ ","  ", "  ", "┃ "},
+            {"┃ ","▢━","━━","▢━","━━", "▢ ", "┃ "},
+            {"┃ ","┃ ","  ","┃ ","  ", "┃ ", "┃ "},
+            {"┃ ","┃ ","▢━","▢━","▢ ", "┃ ", "┃ "},
+            {"┃ ","┃ ","┃ ","  ","┃ ", "┃ ", "┃ "},
+            {"▢━","▢━","▢ ","  ","▢━", "▢━", "▢"},
+            {"┃ ","┃ ","┃ ","  ","┃ ", "┃ ", "┃ "},
+            {"┃ ","┃ ","▢━","▢━","▢ ", "┃ ", "┃ "},
+            {"┃ ","┃ ","  ","┃ ","  ", "┃ ", "┃ "},
+            {"┃ ","▢━","━━","▢━","━━", "▢ ", "┃ "},
+            {"┃ ","  ","  ","┃ ","  ", "  ", "┃ "},
+            {"▢━","━━","━━","▢━","━━", "━━", "▢"},
+    };
 
-        public GameParams(PlayerType player1Type, PlayerType player2Type) {
-            this.player1Type = player1Type;
-            this.player2Type = player1Type;
+    public class GameParams {
+        PlayerType playerTypes[];
+
+        public GameParams(PlayerType... playerTypes) {
+            assert(playerTypes.length == 2);
+            this.playerTypes = playerTypes;
         }
     }
 
@@ -28,6 +42,78 @@ public class GameInterface {
 
     public GameParams getParams() throws Exception {
         return new GameParams(readPlayerType(1), readPlayerType(2));
+    }
+
+    public Move getMoveFromUser(Board board) throws Exception {
+        displayGameState(board);
+
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+        BoardLocation fromPosition = null;
+        BoardLocation toPosition = null;
+
+        try {
+            switch (board.getStage()) {
+                case PLACING:
+                    System.out.println("Where do you want to place your piece? (a1 - g7)");
+                    toPosition = new BoardLocation(in.readLine());
+                    break;
+                case MOVING:
+                case FLYING:
+                    System.out.println("Move piece");
+                    System.out.print("FROM: ");
+                    fromPosition = new BoardLocation(in.readLine());
+                    System.out.print("TO: ");
+                    toPosition = new BoardLocation(in.readLine());
+                    break;
+            }
+        } catch(BoardLocation.InvalidLocationException ex) {
+            System.err.println("Invalid location");
+        }
+
+        return new Move(fromPosition, toPosition);
+    }
+
+    /**
+     * Prints a representation of the game board to the console
+     * @param board the board model to get the game state from
+     */
+    private void displayGameState(Board board) {
+        int boardSize = Board.VALID_LOCATIONS.length; // assumes a square board
+        for (int y = 0; y < boardSize; y++) {
+            System.out.print((y+1) + " ");
+            for( int x = 0; x < boardSize; x++) {
+                if (Board.VALID_LOCATIONS[y][x]) {
+                    Piece piece = board.getPieceAt(x, y);
+                    System.out.print(displayPiece(piece, board));
+                    System.out.print(BOARD_LINES[2*y][x].substring(1));
+                } else {
+                    System.out.print(BOARD_LINES[2 * y][x]);
+                }
+            }
+            System.out.print("\n  ");
+            if (y + 1 != boardSize) {
+                for (int x = 0; x < boardSize; x++) {
+                    System.out.print(BOARD_LINES[2 * y + 1][x]);
+                }
+                System.out.print("\n");
+            }
+        }
+        for( int x = 0; x < boardSize; x++) {
+            System.out.print(((char) ('a' + x)) + " ");
+        }
+        System.out.print("\n");
+    }
+
+    private String displayPiece(Piece piece, Board board) {
+        if (piece == null) {
+            return "▢";
+        } else {
+            if (piece.getOwner() == board.getPlayer(0)) {
+                return "●";
+            } else {
+                return "○";
+            }
+        }
     }
 
     private PlayerType readPlayerType(int id) throws IOException {
@@ -45,5 +131,13 @@ public class GameInterface {
         } while(playerType == null);
 
         return playerType;
+    }
+
+    public void notifyCurrentPlayer(Player player, int id) {
+        System.out.println("Current player is Player " + (id + 1));
+    }
+
+    public void displayError(Exception ex) {
+        System.err.println(ex);
     }
 }
