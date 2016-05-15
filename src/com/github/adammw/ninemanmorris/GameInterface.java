@@ -122,6 +122,16 @@ public class GameInterface {
 
         return new Move(fromPosition, null);
     }
+
+    /**
+     * Announce the game winner
+     * @param winner the winning player object
+     * @param id the index of the winning player
+     */
+    public void announceWinner(Player winner, int id) {
+        System.out.println("Player " + (id + 1) + " wins!");
+    }
+
     /**
      * Prints a representation of the game board to the console
      * @param board the board model to get the game state from

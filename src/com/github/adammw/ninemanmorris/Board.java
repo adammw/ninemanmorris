@@ -11,8 +11,8 @@ import java.util.stream.IntStream;
  * This class represents the game board and contains all the data for the current state of the game
  */
 public class Board {
-    private HashMap<Player, GameStage> stageMap = new HashMap<>();
-    private HashMap<Player, List<Piece>> pieceMap = new HashMap<>();
+    private HashMap<Player, GameStage> playerStages = new HashMap<>();
+    private HashMap<Player, List<Piece>> playerPieces = new HashMap<>();
     private Player[] players;
     private Piece[][] board = new Piece[7][7];
     private List<Move> history = new ArrayList<>();
@@ -62,8 +62,8 @@ public class Board {
         // Create pieces for each player
         for(Player player : players) {
             List<Piece> pieces = IntStream.range(0, 9).mapToObj(i -> new Piece(player)).collect(Collectors.toList());
-            pieceMap.put(player, pieces);
-            stageMap.put(player, GameStage.PLACING);
+            playerPieces.put(player, pieces);
+            playerStages.put(player, GameStage.PLACING);
         };
     }
 
@@ -71,14 +71,14 @@ public class Board {
      * @return the current stage of the game
      */
     public GameStage getStage(Player player) {
-        return stageMap.get(player);
+        return playerStages.get(player);
     }
 
     /**
      * @return if the game is over
      */
     public boolean isGameOver() {
-        return stageMap.values().stream().anyMatch(stage -> stage == GameStage.GAME_OVER);
+        return playerStages.values().stream().anyMatch(stage -> stage == GameStage.GAME_OVER);
     }
 
     /**
@@ -107,6 +107,19 @@ public class Board {
     }
 
     /**
+     * Get the winning player
+     * @return the player object representing the player who won the game, or null if the game is still in play
+     */
+    public Player getWinningPlayer() {
+        if (!isGameOver()) { return null; }
+        for (Player p : players) {
+            if (playerStages.get(p) != GameStage.GAME_OVER) {
+                return p;
+            }
+        }
+    }
+
+    /**
      * Perform a move
      * @param move the move to perform
      * @param player the player performing the move
@@ -124,7 +137,7 @@ public class Board {
         // Validate the move according to the game state and game rules
         if (currentStage == GameStage.PLACING) {
             assert(prevLocation == null);
-            piece = pieceMap.get(player).remove(0);
+            piece = playerPieces.get(player).remove(0);
         } else {
             piece = getPieceAt(prevLocation);
             if (piece == null) {
@@ -267,20 +280,20 @@ public class Board {
         switch (currentStage) {
             case PLACING:
                 // Move to Moving stage when the player has no more pieces to place
-                if (pieceMap.get(player).size() == 0) {
-                    stageMap.put(player, GameStage.MOVING);
+                if (playerPieces.get(player).size() == 0) {
+                    playerStages.put(player, GameStage.MOVING);
                 }
                 break;
             case MOVING:
                 // Move to flying stage when the player has only 3 pieces left
                 if (numPiecesOnBoardOwnedByPlayer(player) < 4) {
-                    stageMap.put(player, GameStage.FLYING);
+                    playerStages.put(player, GameStage.FLYING);
                 }
                 break;
             case FLYING:
                 // The game is over when the player has less than 3 pieces left
                 if (numPiecesOnBoardOwnedByPlayer(player) < 3) {
-                    stageMap.put(player, GameStage.GAME_OVER);
+                    playerStages.put(player, GameStage.GAME_OVER);
                 }
                 break;
         }

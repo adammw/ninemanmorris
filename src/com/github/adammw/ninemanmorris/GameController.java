@@ -1,5 +1,6 @@
 package com.github.adammw.ninemanmorris;
 
+import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
@@ -65,6 +66,10 @@ public class GameController {
                 view.displayError(ex);
             }
         } while(!board.isGameOver());
+
+        // Announce winner if game is over
+        Player winningPlayer = board.getWinningPlayer();
+        view.announceWinner(winningPlayer, Arrays.asList(players).indexOf(winningPlayer));
     }
 
     /**
