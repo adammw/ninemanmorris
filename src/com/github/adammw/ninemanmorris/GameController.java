@@ -46,7 +46,7 @@ public class GameController {
                     System.out.println("mill formed!!!");
                 });
                 currentPlayerIdx = (currentPlayerIdx + 1) % players.length;
-            } catch(Board.MoveException ex) {
+            } catch(Board.IllegalMoveException ex) {
                 view.displayError(ex);
             }
         } while(!board.isGameOver());

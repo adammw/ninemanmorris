@@ -37,4 +37,8 @@ public class BoardLocation {
     public int getY() {
         return y;
     }
+
+    public boolean equals(BoardLocation o) {
+        return o != null && this.x == o.x && this.y == o.y;
+    }
 }

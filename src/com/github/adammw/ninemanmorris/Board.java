@@ -16,27 +16,46 @@ public class Board {
     private Player[] players;
     private Piece[][] board = new Piece[7][7];
     private List<Move> history = new ArrayList<>();
+    private boolean allowRemoval = false; // set when the previous move formed a mill
 
+    /**
+     * This constant array lists which locations are valid positions on the board.
+     * The array should be indexed y first then x, although since it is symmetrical it doesn't change the result
+     */
     public static final boolean[][] VALID_LOCATIONS = {
-            {true, false, false, true, false, false, true},
-            {false, true, false, true, false, true, false},
-            {false, false, true, true, true, false, false},
-            {true, true, true, false, true, true, true},
-            {false, false, true, true, true, false, false},
-            {false, true, false, true, false, true, false},
-            {true, false, false, true, false, false, true}
+            // false for x = midpoint && y = midpoint, otherwise
+            // true for x = midpoint || y = midpoint, otherwise
+            // true for every x = y, otherwise
+            // false
+            {true,  false, false, true,  false, false, true},
+            {false, true,  false, true,  false, true,  false},
+            {false, false, true,  true,  true,  false, false},
+            {true,  true,  true,  false, true,  true,  true},
+            {false, false, true,  true,  true,  false, false},
+            {false, true,  false, true,  false, true,  false},
+            {true,  false, false, true,  false, false, true}
     };
 
+    /**
+     * This interface is used for providing callbacks when a mill is formed while processing a move
+     */
     public interface MillFormedCallback {
         void millFormed();
     }
 
-    public class MoveException extends Exception {
-        public MoveException(String message) {
+    /**
+     * A custom exception class raised when invalid moves are encountered
+     */
+    public class IllegalMoveException extends Exception {
+        public IllegalMoveException(String message) {
             super(message);
         }
     }
 
+    /**
+     * Create a new Board model
+     * @param players the players of the game
+     */
     public Board(Player[] players) {
         this.players = players;
 
@@ -92,34 +111,138 @@ public class Board {
      * @param move the move to perform
      * @param player the player performing the move
      */
-    public void performMove(Move move, Player player, MillFormedCallback millFormedCallback) throws MoveException {
+    public void performMove(Move move, Player player, MillFormedCallback millFormedCallback) throws IllegalMoveException {
         Piece piece;
 
         BoardLocation prevLocation = move.getPreviousPieceLocation();
+        BoardLocation newLocation = move.getNewPieceLocation();
         GameStage currentStage = getStage(player);
+        assert((allowRemoval && newLocation == null) || (!allowRemoval && newLocation != null));
+        assert(currentStage != GameStage.GAME_OVER);
+
+        // Validate the move according to the game state and game rules
         if (currentStage == GameStage.PLACING) {
             assert(prevLocation == null);
             piece = pieceMap.get(player).remove(0);
         } else {
             piece = getPieceAt(prevLocation);
-            if (piece.getOwner() != player) {
-                throw new MoveException("Can't move another player's piece");
+            if (piece == null) {
+                throw new IllegalMoveException("There is no piece at the specified location");
             }
-            removePieceFrom(prevLocation);
+            if (!allowRemoval && piece.getOwner() != player) {
+                throw new IllegalMoveException("Can't move another player's piece");
+            }
+            if (allowRemoval && piece.getOwner() == player) {
+                throw new IllegalMoveException("Can't remove your own piece");
+            }
+            if (prevLocation.equals(newLocation)) {
+                throw new IllegalMoveException("Must move a piece");
+            }
+            if (currentStage == GameStage.MOVING) {
+                if (!isAdjacent(prevLocation, newLocation)) {
+                    throw new IllegalMoveException("Flying is not allowed yet");
+                }
+            }
         }
 
-        BoardLocation newLocation = move.getNewPieceLocation();
-        assert(newLocation != null);
-        if (getPieceAt(newLocation) != null) {
-            throw new MoveException("Piece already placed there");
+        // Ensure if placing or moving, that the piece doesn't already exist at that location
+        if (newLocation != null && getPieceAt(newLocation) != null) {
+            throw new IllegalMoveException("Piece already placed there");
         }
-        addPieceTo(newLocation, piece);
+
+        // Remove the old piece from the board and add it to it's new location
+        // null checks are necessary - placing mode makes prevLocation=null and mill formation makes newLocation=null
+        if (prevLocation != null) {
+            removePiece(prevLocation);
+        }
+        if (newLocation != null) {
+            addPiece(newLocation, piece);
+        }
+
+        // Save move history for undo
+        history.add(move);
+
         recalculateGameStage(player);
 
-        if (wasMillFormed(player, newLocation)) {
+        // Reset allowRemoval flag if it was set (only allow a single move per millFormed callback)
+        if (allowRemoval) {
+            allowRemoval = false;
+        } else if(wasMillFormed(player, newLocation)) { // if a mill was formed, notify callback and recalculate opponent's stage
+            allowRemoval = true;
             millFormedCallback.millFormed();
+            allowRemoval = false;
             recalculateGameStage(getOpposingPlayer(player));
+
         }
+    }
+
+    /**
+     * Checks the two locations are adjacent to each other on the board and connected by lines
+     * @param loc1
+     * @param loc2
+     * @return
+     */
+    private boolean isAdjacent(BoardLocation loc1, BoardLocation loc2) {
+        int boardSize = board.length;
+        int midpoint = boardSize / 2;
+        int x = loc1.getX();
+        int y = loc1.getY();
+
+        if (loc1.getX() == loc2.getX()) { // vertical movement
+            // check if next spot in positive direction is the next location,
+            // unless it's d5 (as otherwise it would treat d3 as adjacent)
+            if(x != midpoint || y != (midpoint - 1)) {
+                for (int y2 = y + 1; y2 < boardSize; y2++) {
+                    if (VALID_LOCATIONS[y2][x]) {
+                        if (loc2.getY() == y2) {
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // check if next spot in negative direction is the next location,
+            // unless it's d3 (as otherwise it would treat d5 as adjacent)
+            if (x != midpoint || y != (midpoint + 1)) {
+                for (int y2 = y - 1; y2 > 0; y2--) {
+                    if (VALID_LOCATIONS[y2][x]) {
+                        if (loc2.getY() == y2) {
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            }
+        } else if (loc1.getY() == loc2.getY()) { // horizontal movement
+            // check if next spot in positive direction is the next location,
+            // unless it's c4 (as otherwise it would treat e4 as adjacent)
+            if(y != midpoint || x != (midpoint - 1)) {
+                for (int x2 = x + 1; x2 < boardSize; x2++) {
+                    if (VALID_LOCATIONS[y][x2]) {
+                        if (loc2.getX() == x2) {
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // check if next spot in negative direction is the next location,
+            // unless it's e4 (as otherwise it would treat c4 as adjacent)
+            if (y != midpoint || x != (midpoint + 1)) {
+                for (int x2 = y - 1; x2 > 0; x2--) {
+                    if (VALID_LOCATIONS[y][x2]) {
+                        if (loc2.getX() == x2) {
+                            return true;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -140,16 +263,19 @@ public class Board {
         GameStage currentStage = getStage(player);
         switch (currentStage) {
             case PLACING:
+                // Move to Moving stage when the player has no more pieces to place
                 if (pieceMap.get(player).size() == 0) {
                     stageMap.put(player, GameStage.MOVING);
                 }
                 break;
             case MOVING:
+                // Move to flying stage when the player has only 3 pieces left
                 if (numPiecesOnBoardOwnedByPlayer(player) < 4) {
                     stageMap.put(player, GameStage.FLYING);
                 }
                 break;
             case FLYING:
+                // The game is over when the player has less than 3 pieces left
                 if (numPiecesOnBoardOwnedByPlayer(player) < 3) {
                     stageMap.put(player, GameStage.GAME_OVER);
                 }
@@ -269,11 +395,20 @@ public class Board {
                 .count();
     }
 
-    private void removePieceFrom(BoardLocation loc) {
+    /**
+     * Remove a piece from the board at the specified location
+     * @param loc location on the board to remove the piece
+     */
+    private void removePiece(BoardLocation loc) {
         board[loc.getY()][loc.getX()] = null;
     }
 
-    private void addPieceTo(BoardLocation loc, Piece piece) {
+    /**
+     * Add a piece to the board at the specified location
+     * @param loc location on the board to add the piece
+     * @param piece the piece to add
+     */
+    private void addPiece(BoardLocation loc, Piece piece) {
         board[loc.getY()][loc.getX()] = piece;
     }
 }
