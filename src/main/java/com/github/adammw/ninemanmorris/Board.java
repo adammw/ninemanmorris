@@ -188,7 +188,7 @@ public class Board {
 
         // Ensure if placing or moving, that the piece doesn't already exist at that location
         if (newLocation != null && getPieceAt(newLocation) != null) {
-            throw new IllegalMoveException("Piece already placed there");
+            throw new IllegalMoveException("Board location is occupied");
         }
 
         // Remove the old piece from the board and add it to it's new location
