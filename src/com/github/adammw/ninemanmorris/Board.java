@@ -117,6 +117,7 @@ public class Board {
                 return p;
             }
         }
+        return null;
     }
 
     /**
@@ -127,29 +128,49 @@ public class Board {
      */
     public void performMove(Move move, Player player, MillFormedCallback millFormedCallback) throws IllegalMoveException {
         Piece piece;
-
+        Player opponent = getOpposingPlayer(player);
         BoardLocation prevLocation = move.getPreviousPieceLocation();
         BoardLocation newLocation = move.getNewPieceLocation();
         GameStage currentStage = getStage(player);
+        assert(prevLocation != null || newLocation != null);
         assert((allowRemoval && newLocation == null) || (!allowRemoval && newLocation != null));
         assert(currentStage != GameStage.GAME_OVER);
 
-        // Validate the move according to the game state and game rules
-        if (currentStage == GameStage.PLACING) {
-            assert(prevLocation == null);
+        // Validate the move's from location according to the game state and game rules
+        if (prevLocation == null) {
+            assert(currentStage == GameStage.PLACING);
             piece = playerPieces.get(player).remove(0);
         } else {
             piece = getPieceAt(prevLocation);
+
+            // Ensure there is a piece at the from location
             if (piece == null) {
                 throw new IllegalMoveException("There is no piece at the specified location");
             }
-            if (!allowRemoval && piece.getOwner() != player) {
+
+            // Ensure you can't remove your own piece if a mill is formed
+            if (newLocation == null && piece.getOwner() == player) {
+                throw new IllegalMoveException("Can't remove your own piece");
+            }
+
+            // Ensure you can't remove an opponents piece in a mill
+            if (newLocation == null && isInMill(prevLocation, opponent) &&
+                    (numPiecesOnBoardOwnedByPlayer(opponent) - numPiecesInMillsOwnedByPlayer(opponent)) > 0) {
+                throw new IllegalMoveException("Can't remove a piece which is part of a mill");
+            }
+
+            // Ensure you can't remove another player's piece when moving/flying
+            if (newLocation != null && piece.getOwner() != player) {
                 throw new IllegalMoveException("Can't move another player's piece");
             }
+
+            // Ensure that the piece was actually moved
             if (prevLocation.equals(newLocation)) {
                 throw new IllegalMoveException("Must move a piece");
             }
-            if (currentStage == GameStage.MOVING) {
+
+            // Ensure you can't fly until you are in the flying stage
+            if (newLocation != null && currentStage == GameStage.MOVING) {
                 if (!isAdjacent(prevLocation, newLocation)) {
                     throw new IllegalMoveException("Flying is not allowed yet");
                 }
@@ -161,11 +182,6 @@ public class Board {
             throw new IllegalMoveException("Piece already placed there");
         }
 
-        // Ensure you can't remove your own piece if a mill is formed
-        if (newLocation == null && piece.getOwner() == player) {
-            throw new IllegalMoveException("Can't remove your own piece");
-        }
-
         // Remove the old piece from the board and add it to it's new location
         // null checks are necessary - placing mode makes prevLocation=null and mill formation makes newLocation=null
         if (prevLocation != null) {
@@ -175,20 +191,20 @@ public class Board {
             addPiece(newLocation, piece);
         }
 
-        // Save move history for undo
+        // Save move history for undo and recalculate the player's stage of the game
         history.add(move);
-
         recalculateGameStage(player);
 
         // Reset allowRemoval flag if it was set (only allow a single move per millFormed callback)
         if (allowRemoval) {
             allowRemoval = false;
-        } else if(wasMillFormed(player, newLocation)) { // if a mill was formed, notify callback and recalculate opponent's stage
+        } else if(isInMill(newLocation, player)) { // if a mill was formed, notify callback and recalculate opponent's stage
             allowRemoval = true;
             millFormedCallback.millFormed();
             allowRemoval = false;
-            recalculateGameStage(getOpposingPlayer(player));
 
+            // Recalculate the opponent's game stage as the piece removal may now allow them to fly or lose the game
+            recalculateGameStage(getOpposingPlayer(player));
         }
     }
 
@@ -300,15 +316,24 @@ public class Board {
     }
 
     /**
-     * Determine if a mill was just formed by a player placing their piece
-     * @param player the player to check
-     * @param newPieceLocation the location of the last piece added/moved on the board
-     * @return whether or not 3 pieces in a row (a mill) was formed
+     * Determine if a mill exists in the location specified
+     * @param loc the location to check for a mill
+     * @param player the player to check for owning the mill
+     * @return whether or not 3 pieces in a row (a mill) was formed at that location
      */
-    private boolean wasMillFormed(Player player, BoardLocation newPieceLocation) {
+    private boolean isInMill(BoardLocation loc, Player player) {
+        return isInMill(loc.getX(), loc.getY(), player);
+    }
+
+    /**
+     * Determine if a mill exists in the location specified
+     * @param x the x location to check for a mill
+     * @param y the y location to check for a mill
+     * @param player the player to check for owning the mill
+     * @return whether or not 3 pieces in a row (a mill) was formed at that location
+     */
+    private boolean isInMill(int x, int y, Player player) {
         boolean millFormed = false;
-        int x = newPieceLocation.getX();
-        int y = newPieceLocation.getY();
         int boardSize = board.length;
         int boardMidpoint = boardSize / 2;
 
@@ -409,6 +434,24 @@ public class Board {
                 .flatMap(Arrays::stream)
                 .filter(x -> x != null && x.getOwner() == player)
                 .count();
+    }
+
+    /**
+     * Count the number of pieces that a player has on a board that are currently forming a mill
+     * @param player the player to chec
+     * @return the number of pieces forming a mill (must be a multiple of 3)
+     */
+    private int numPiecesInMillsOwnedByPlayer(Player player) {
+        int count = 0;
+        for (int y = 0; y < board.length; y++) {
+            for (int x = 0; x < board[y].length; x++) {
+                if (!VALID_LOCATIONS[y][x]) { continue; }
+                Piece piece = getPieceAt(x, y);
+                if (piece == null || piece.getOwner() != player) { continue; }
+                if (isInMill(x, y, player)) { count++; }
+            }
+        }
+        return count;
     }
 
     /**
