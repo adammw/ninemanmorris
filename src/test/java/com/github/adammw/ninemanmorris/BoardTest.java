@@ -129,13 +129,15 @@ public class BoardTest {
         internalBoard[6][0] = playerPieces.get(players[0]).remove(0);
         internalBoard[6][6] = playerPieces.get(players[0]).remove(0);
 
-        Move move = new Move(null, "d1");
-        board.performMove(move, players[0], callback);
-
-        thrown.expect(Board.IllegalMoveException.class);
-        thrown.expectMessage("There is no piece at the specified location");
-
-        board.performMove(new Move("d7", null), players[0], null);
+        Move removeD7 = new Move("d7", null);
+        board.performMove(new Move(null, "d1"), players[0], () -> {
+            try {
+                board.performMove(removeD7, players[0], null);
+                fail();
+            } catch (Board.IllegalMoveException e) {
+                assertEquals(e.getMessage(), "There is no piece at the specified location");
+            }
+        });
     }
 
     @Test
@@ -143,13 +145,16 @@ public class BoardTest {
         internalBoard[6][0] = playerPieces.get(players[0]).remove(0);
         internalBoard[6][6] = playerPieces.get(players[0]).remove(0);
 
-        Move move = new Move(null, "d7");
-        board.performMove(move, players[0], callback);
-
-        thrown.expect(Board.IllegalMoveException.class);
-        thrown.expectMessage("Can't remove your own piece");
-
-        board.performMove(new Move("d7", null), players[0], null);
+        Move addD7 = new Move(null, "d7");
+        Move removeD7 = new Move("d7", null);
+        board.performMove(addD7, players[0], () -> {
+            try {
+                board.performMove(removeD7, players[0], null);
+                fail();
+            } catch (Board.IllegalMoveException e) {
+                assertEquals(e.getMessage(), "Can't remove your own piece");
+            }
+        });
     }
 
 
