@@ -97,7 +97,16 @@ public class Board {
     public Piece getPieceAt(BoardLocation location) {
         return getPieceAt(location.getX(), location.getY());
     }
-    
+
+    /**
+     * Get the number of pieces remaining to be placed for the specified player
+     * @param player the player to check
+     * @return the number of pieces yet to be placed
+     */
+    public int getPiecesRemainingToBePlacedForPlayer(Player player) {
+        return playerPieces.get(player).size();
+    }
+
     /**
      * @param id
      * @return

@@ -73,7 +73,8 @@ public class GameInterface {
             try {
                 switch (board.getStage(player)) {
                     case PLACING:
-                        System.out.println("Where do you want to place your piece? (a1 - g7)");
+                        System.out.println("You have " + board.getPiecesRemainingToBePlacedForPlayer(player) + " pieces remaining to be placed.");
+                        System.out.println("Where do you want to place your next piece? (a1 - g7)");
                         printPrompt();
                         toPosition = new BoardLocation(in.readLine());
                         break;
