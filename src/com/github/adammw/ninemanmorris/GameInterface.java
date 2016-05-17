@@ -10,7 +10,8 @@ import java.util.stream.Stream;
  * Interfaces with the user to provide a graphical representation of the game and solicit input from the user
  */
 public class GameInterface {
-    private static final boolean USE_EMOJI = false;
+    private static final String TERM = System.getenv("TERM");
+    private static final boolean USE_EMOJI = (TERM != null) && TERM.startsWith("xterm");
     private static final String[][] BOARD_LINES = {
             {"◦─","──","──","◦─","──", "──", "◦"},
             {"│ ","  ","  ","│ ","  ", "  ", "│ "},
