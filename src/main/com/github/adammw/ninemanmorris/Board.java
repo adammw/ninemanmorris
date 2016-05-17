@@ -97,7 +97,7 @@ public class Board {
     public Piece getPieceAt(BoardLocation location) {
         return getPieceAt(location.getX(), location.getY());
     }
-
+    
     /**
      * @param id
      * @return
