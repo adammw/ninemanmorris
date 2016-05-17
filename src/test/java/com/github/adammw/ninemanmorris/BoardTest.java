@@ -21,6 +21,7 @@ public class BoardTest {
     private Board board;
     private Piece[][] internalBoard;
     private HashMap<Player, List<Piece>> playerPieces;
+    private HashMap<Player, GameStage> playerStages;
     private Board.MillFormedCallback callback;
 
     @Rule
@@ -36,10 +37,13 @@ public class BoardTest {
         };
         board = new Board(players);
 
-        // Expose private fields with reflection
+        // Expose private fields with reflection for use in tests
         Field boardField = Board.class.getDeclaredField("board");
         boardField.setAccessible(true);
         internalBoard = (Piece[][]) boardField.get(board);
+        Field playerStagesField = Board.class.getDeclaredField("playerStages");
+        playerStagesField.setAccessible(true);
+        playerStages = (HashMap<Player, GameStage>) playerStagesField.get(board);
         Field playerPiecesField = Board.class.getDeclaredField("playerPieces");
         playerPiecesField.setAccessible(true);
         playerPieces = (HashMap<Player, List<Piece>>) playerPiecesField.get(board);
@@ -240,6 +244,56 @@ public class BoardTest {
 
         assertEquals(board.getStage(players[0]), GameStage.GAME_OVER);
         assertTrue(board.isGameOver());
+    }
+
+    @Test
+    public void testCantMoveOtherPlayer() throws Exception {
+        internalBoard[0][0] = playerPieces.get(players[1]).remove(0);
+        playerStages.put(players[0], GameStage.MOVING);
+
+        thrown.expect(Board.IllegalMoveException.class);
+        thrown.expectMessage("Can't move another player's piece");
+
+        board.performMove(new Move("a1", "d1"), players[0], callback);
+    }
+
+    @Test
+    public void testCantMoveOccupiedLocation() throws Exception {
+        internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
+        internalBoard[0][3] = playerPieces.get(players[0]).remove(0);
+        playerStages.put(players[0], GameStage.MOVING);
+
+        thrown.expect(Board.IllegalMoveException.class);
+        thrown.expectMessage("Board location is occupied");
+
+        board.performMove(new Move("a1", "d1"), players[0], callback);
+    }
+
+    @Test
+    public void testCantMoveWhereNotConnected() throws Exception {
+        internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
+        playerStages.put(players[0], GameStage.MOVING);
+
+        thrown.expect(Board.IllegalMoveException.class);
+        thrown.expectMessage("Flying is not allowed yet");
+
+        board.performMove(new Move("a1","b2"), players[0], callback);
+    }
+
+    @Test
+    public void testMoving() throws Exception {
+        internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("a1","d1"), players[0], callback);
+        verifyZeroInteractions(callback);
+    }
+
+    @Test
+    public void testFlying() throws Exception {
+        internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
+        playerStages.put(players[0], GameStage.FLYING);
+        board.performMove(new Move("a1","b2"), players[0], callback);
+        verifyZeroInteractions(callback);
     }
 
 }
