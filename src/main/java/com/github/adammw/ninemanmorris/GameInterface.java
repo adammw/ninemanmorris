@@ -183,7 +183,7 @@ public class GameInterface {
         if (piece == null) {
             return "◦"; // unoccupied intersection
         } else {
-            if (piece.getOwner() == board.getPlayer(0)) {
+            if (piece.getOwner() != board.getPlayer(0)) {
                 return USE_EMOJI ?  "⚫" : "●";
             } else {
                 return USE_EMOJI ? "⚪" : "○";
