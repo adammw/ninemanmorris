@@ -281,6 +281,62 @@ public class BoardTest {
     }
 
     @Test
+    public void testCantMoveAcrossMidpoint() throws Exception {
+        internalBoard[3][2] = playerPieces.get(players[0]).remove(0);
+        playerStages.put(players[0], GameStage.MOVING);
+
+        thrown.expect(Board.IllegalMoveException.class);
+        thrown.expectMessage("Flying is not allowed yet");
+
+        board.performMove(new Move("c4","e4"), players[0], callback);
+    }
+
+    @Test
+    public void testCanMoveHorizontallyOnMidpointRow() throws Exception {
+        internalBoard[3][0] = playerPieces.get(players[0]).remove(0);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("a4","b4"), players[0], callback);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("b4","a4"), players[0], callback);
+    }
+
+    @Test
+    public void testCanMoveVerticallyOnMidpointColumn() throws Exception {
+        internalBoard[0][3] = playerPieces.get(players[0]).remove(0);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("d1","d2"), players[0], callback);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("d2","d1"), players[0], callback);
+    }
+
+
+    @Test
+    public void testCanMoveHorizontally() throws Exception {
+        internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("a1","d1"), players[0], callback);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("d1","a1"), players[0], callback);
+    }
+
+    @Test
+    public void testCanMoveVertically() throws Exception {
+        internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("a1","a4"), players[0], callback);
+
+        playerStages.put(players[0], GameStage.MOVING);
+        board.performMove(new Move("a4","a1"), players[0], callback);
+    }
+
+    @Test
     public void testMoving() throws Exception {
         internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
         playerStages.put(players[0], GameStage.MOVING);

@@ -219,8 +219,8 @@ public class Board {
 
     /**
      * Checks the two locations are adjacent to each other on the board and connected by lines
-     * @param loc1
-     * @param loc2
+     * @param loc1 location 1
+     * @param loc2 location 2
      * @return
      */
     private boolean isAdjacent(BoardLocation loc1, BoardLocation loc2) {
@@ -229,7 +229,7 @@ public class Board {
         int x = loc1.getX();
         int y = loc1.getY();
 
-        if (loc1.getX() == loc2.getX()) { // vertical movement
+        if (x == loc2.getX()) { // vertical movement
             // check if next spot in positive direction is the next location,
             // unless it's d5 (as otherwise it would treat d3 as adjacent)
             if(x != midpoint || y != (midpoint - 1)) {
@@ -246,7 +246,7 @@ public class Board {
             // check if next spot in negative direction is the next location,
             // unless it's d3 (as otherwise it would treat d5 as adjacent)
             if (x != midpoint || y != (midpoint + 1)) {
-                for (int y2 = y - 1; y2 > 0; y2--) {
+                for (int y2 = y - 1; y2 >= 0; y2--) {
                     if (VALID_LOCATIONS[y2][x]) {
                         if (loc2.getY() == y2) {
                             return true;
@@ -255,7 +255,7 @@ public class Board {
                     }
                 }
             }
-        } else if (loc1.getY() == loc2.getY()) { // horizontal movement
+        } else if (y == loc2.getY()) { // horizontal movement
             // check if next spot in positive direction is the next location,
             // unless it's c4 (as otherwise it would treat e4 as adjacent)
             if(y != midpoint || x != (midpoint - 1)) {
@@ -272,7 +272,7 @@ public class Board {
             // check if next spot in negative direction is the next location,
             // unless it's e4 (as otherwise it would treat c4 as adjacent)
             if (y != midpoint || x != (midpoint + 1)) {
-                for (int x2 = y - 1; x2 > 0; x2--) {
+                for (int x2 = x - 1; x2 >= 0; x2--) {
                     if (VALID_LOCATIONS[y][x2]) {
                         if (loc2.getX() == x2) {
                             return true;
