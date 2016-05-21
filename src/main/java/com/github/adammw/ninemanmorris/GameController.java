@@ -69,7 +69,7 @@ public class GameController {
 
         // Announce winner if game is over
         Player winningPlayer = board.getWinningPlayer();
-        view.announceWinner(winningPlayer, Arrays.asList(players).indexOf(winningPlayer));
+        view.announceWinner(board, winningPlayer, Arrays.asList(players).indexOf(winningPlayer));
     }
 
     /**

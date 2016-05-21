@@ -29,6 +29,10 @@ public class GameInterface {
     };
     private int playerIdx = 0;
 
+    /**
+     * Data-holding class which stores the parameters for a game
+     * Includes the player types for each player
+     */
     public class GameParams {
         PlayerType playerTypes[];
 
@@ -131,10 +135,13 @@ public class GameInterface {
 
     /**
      * Announce the game winner
+     * @param board the final state of the game board
      * @param winner the winning player object
      * @param id the index of the winning player
      */
-    public void announceWinner(Player winner, int id) {
+    public void announceWinner(Board board, Player winner, int id) {
+        System.out.println("The game is over");
+        displayGameState(board);
         System.out.println("Player " + (id + 1) + " wins!");
     }
 

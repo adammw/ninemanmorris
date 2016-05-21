@@ -1,5 +1,8 @@
 package com.github.adammw.ninemanmorris;
 
+/**
+ * This class defines the main entry point of the application
+ */
 public class Main {
 
     public static void main(String[] args) {

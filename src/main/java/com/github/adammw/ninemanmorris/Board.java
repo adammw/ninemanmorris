@@ -68,6 +68,8 @@ public class Board {
     }
 
     /**
+     * Returns the player's current stage in the game
+     * @param player the player to check
      * @return the current stage of the game
      */
     public GameStage getStage(Player player) {
@@ -75,6 +77,7 @@ public class Board {
     }
 
     /**
+     * Check if the game is over
      * @return if the game is over
      */
     public boolean isGameOver() {
@@ -82,8 +85,9 @@ public class Board {
     }
 
     /**
-     * @param x
-     * @param y
+     * Access the piece at the specified coordinates
+     * @param x the x coordinate
+     * @param y the y coordinate
      * @return the piece on the board at the specified coordinates
      */
     public Piece getPieceAt(int x, int y) {
@@ -91,7 +95,8 @@ public class Board {
     }
 
     /**
-     * @param location
+     * Access the piece at the specified location
+     * @param location a BoardLocation object representing the location on the board
      * @return the piece on the board at the specified coordinates, or null if there is no piece
      */
     public Piece getPieceAt(BoardLocation location) {
@@ -108,11 +113,12 @@ public class Board {
     }
 
     /**
-     * @param id
-     * @return
+     * Get a specific player object
+     * @param idx the index of the player to return
+     * @return the player object at position idx
      */
-    public Player getPlayer(int id) {
-        return players[id];
+    public Player getPlayer(int idx) {
+        return players[idx];
     }
 
     /**
@@ -134,6 +140,7 @@ public class Board {
      * @param move the move to perform
      * @param player the player performing the move
      * @param millFormedCallback a callback to be called if a mill is formed
+     * @throws IllegalMoveException when the move is not within the rules of the game or otherwise invalid
      */
     public void performMove(Move move, Player player, MillFormedCallback millFormedCallback) throws IllegalMoveException {
         Piece piece;
