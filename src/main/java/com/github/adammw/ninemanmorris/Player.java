@@ -5,9 +5,19 @@ package com.github.adammw.ninemanmorris;
  */
 public abstract class Player {
     protected GameController controller;
+    protected String name;
 
-    public Player(GameController controller) {
+    public Player(GameController controller, String name) {
         this.controller = controller;
+        this.name = name;
+    }
+
+    /**
+     * Gets the player's name
+     * @return the player name string
+     */
+    public String getName() {
+        return name;
     }
 
     abstract Move getMove(Board board);

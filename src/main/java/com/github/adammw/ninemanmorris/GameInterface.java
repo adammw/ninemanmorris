@@ -27,7 +27,6 @@ public class GameInterface {
             {"│ ","  ","  ","│ ","  ", "  ", "│ "},
             {"◦─","──","──","◦─","──", "──", "◦"},
     };
-    private int playerIdx = 0;
 
     /**
      * Data-holding class which stores the parameters for a game
@@ -80,7 +79,7 @@ public class GameInterface {
                     case PLACING:
                         System.out.println("You have " + board.getPiecesRemainingToBePlacedForPlayer(player) + " pieces remaining to be placed.");
                         System.out.println("Where do you want to place your next piece? (a1 - g7)");
-                        printPrompt();
+                        printPrompt(player);
                         toPosition = new BoardLocation(in.readLine());
                         break;
                     case MOVING:
@@ -89,10 +88,10 @@ public class GameInterface {
                             System.out.println("You are now able to FLY.");
                         }
                         System.out.println("Which piece do you want to move? (a1 - g7) ");
-                        printPrompt();
+                        printPrompt(player);
                         fromPosition = new BoardLocation(in.readLine());
                         System.out.println("Where do you want to move the piece to? (a1 - g7) ");
-                        printPrompt();
+                        printPrompt(player);
                         toPosition = new BoardLocation(in.readLine());
                         break;
                 }
@@ -123,7 +122,7 @@ public class GameInterface {
         do {
             try {
                 System.out.println("Which piece to remove? (a1 - g7)");
-                printPrompt();
+                printPrompt(player);
                 fromPosition = new BoardLocation(in.readLine());
             } catch (BoardLocation.InvalidLocationException ex) {
                 System.err.println("Invalid location");
@@ -137,12 +136,11 @@ public class GameInterface {
      * Announce the game winner
      * @param board the final state of the game board
      * @param winner the winning player object
-     * @param id the index of the winning player
      */
-    public void announceWinner(Board board, Player winner, int id) {
+    public void announceWinner(Board board, Player winner) {
         System.out.println("The game is over");
         displayGameState(board);
-        System.out.println("Player " + (id + 1) + " wins!");
+        System.out.println(winner.getName() + " wins!");
     }
 
     /**
@@ -226,20 +224,19 @@ public class GameInterface {
     }
 
     /**
-     * Print a prompt with the current player of which input is being requested
+     * Print a prompt with the player's name of which input is being requested
+     * @param player the player to prompt for input
      */
-    private void printPrompt() {
-        System.out.print("PLAYER" + (playerIdx + 1) + "> ");
+    private void printPrompt(Player player) {
+        System.out.print(player.getName() + "> ");
     }
 
     /**
      * Display who's turn it is
      * @param player the current player
-     * @param id the id of the current player
      */
-    public void notifyCurrentPlayer(Player player, int id) {
-        playerIdx = id;
-        System.out.println("\nPlayer " + (id + 1) + "'s Turn");
+    public void notifyCurrentPlayer(Player player) {
+        System.out.println("\n" + player.getName() + "'s Turn");
     }
 
     /**

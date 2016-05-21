@@ -32,8 +32,8 @@ public class BoardTest {
         controller = mock(GameController.class);
         callback = mock(Board.MillFormedCallback.class);
         players = new Player[] {
-                PlayerFactory.build(controller, PlayerType.HUMAN_PLAYER),
-                PlayerFactory.build(controller, PlayerType.HUMAN_PLAYER)
+                PlayerFactory.build(controller, PlayerType.HUMAN_PLAYER, "PLAYER 1"),
+                PlayerFactory.build(controller, PlayerType.HUMAN_PLAYER, "PLAYER 2")
         };
         board = new Board(players);
 

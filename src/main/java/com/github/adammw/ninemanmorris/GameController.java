@@ -8,7 +8,6 @@ import java.util.stream.Stream;
  */
 public class GameController {
     private GameInterface view = new GameInterface();
-    private Player[] players = {null, null};
     private Board board;
     private int currentPlayerIdx = 0;
 
@@ -21,12 +20,13 @@ public class GameController {
             GameInterface.GameParams gameParams = view.getParams();
 
             // Build the player instances
-            this.players = Stream.of(gameParams.playerTypes)
-                    .map(playerType -> PlayerFactory.build(this, playerType))
-                    .toArray(Player[]::new);
+            Player[] players = new Player[2];
+            for (int i = 0; i < players.length; i++) {
+                players[i] = PlayerFactory.build(this, gameParams.playerTypes[i], "PLAYER " + (i+1));
+            }
 
             // Create the board model
-            this.board = new Board(this.players);
+            this.board = new Board(players);
         } catch(Exception ex) {
             System.err.println(ex);
             System.exit(1);
@@ -39,8 +39,8 @@ public class GameController {
     public void playGame() {
         do {
             // Notify the view who the current player is
-            Player currentPlayer = getCurrentPlayer();
-            view.notifyCurrentPlayer(currentPlayer, currentPlayerIdx);
+            Player currentPlayer = board.getPlayer(currentPlayerIdx);
+            view.notifyCurrentPlayer(currentPlayer);
 
             // When a mill is formed, prompt the player for which piece to remove continually until valid
             Board.MillFormedCallback millFormedCallback = () -> {
@@ -61,7 +61,7 @@ public class GameController {
             try {
                 Move move = currentPlayer.getMove(board);
                 board.performMove(move, currentPlayer, millFormedCallback);
-                currentPlayerIdx = (currentPlayerIdx + 1) % players.length;
+                currentPlayerIdx = (currentPlayerIdx + 1) % board.getPlayerCount();
             } catch(Board.IllegalMoveException ex) {
                 view.displayError(ex);
             }
@@ -69,7 +69,7 @@ public class GameController {
 
         // Announce winner if game is over
         Player winningPlayer = board.getWinningPlayer();
-        view.announceWinner(board, winningPlayer, Arrays.asList(players).indexOf(winningPlayer));
+        view.announceWinner(board, winningPlayer);
     }
 
     /**
@@ -102,21 +102,5 @@ public class GameController {
             System.exit(1);
             return null;
         }
-    }
-
-    /**
-     * Get the players in the game
-     * @return array of player objects
-     */
-    public Player[] getPlayers() {
-        return players;
-    }
-
-    /**
-     * Get the current player
-     * @return player object for the current player
-     */
-    public Player getCurrentPlayer() {
-        return players[currentPlayerIdx];
     }
 }

@@ -122,6 +122,14 @@ public class Board {
     }
 
     /**
+     * Get the number of players
+     * @return the number of players
+     */
+    public int getPlayerCount() {
+        return players.length;
+    }
+
+    /**
      * Get the winning player
      * @return the player object representing the player who won the game, or null if the game is still in play
      */

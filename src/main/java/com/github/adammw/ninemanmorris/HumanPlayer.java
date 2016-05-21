@@ -7,9 +7,10 @@ public class HumanPlayer extends Player {
     /**
      * Create a new HumanPlayer object
      * @param controller the game controller the object should ask for getting moves from the view
+     * @param name the player name
      */
-    public HumanPlayer(GameController controller) {
-        super(controller);
+    public HumanPlayer(GameController controller, String name) {
+        super(controller, name);
     }
 
     /**
