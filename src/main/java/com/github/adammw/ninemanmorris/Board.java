@@ -145,11 +145,13 @@ public class Board {
         assert((allowRemoval && newLocation == null) || (!allowRemoval && newLocation != null));
         assert(currentStage != GameStage.GAME_OVER);
 
+        // Ensure if placing or moving, that the piece doesn't already exist at that location
+        if (newLocation != null && getPieceAt(newLocation) != null) {
+            throw new IllegalMoveException("Board location is occupied");
+        }
+
         // Validate the move's from location according to the game state and game rules
-        if (prevLocation == null) {
-            assert(currentStage == GameStage.PLACING);
-            piece = playerPieces.get(player).remove(0);
-        } else {
+        if (prevLocation != null) {
             piece = getPieceAt(prevLocation);
 
             // Ensure there is a piece at the from location
@@ -184,23 +186,21 @@ public class Board {
                     throw new IllegalMoveException("Flying is not allowed yet");
                 }
             }
-        }
 
-        // Ensure if placing or moving, that the piece doesn't already exist at that location
-        if (newLocation != null && getPieceAt(newLocation) != null) {
-            throw new IllegalMoveException("Board location is occupied");
-        }
-
-        // Remove the old piece from the board and add it to it's new location
-        // null checks are necessary - placing mode makes prevLocation=null and mill formation makes newLocation=null
-        if (prevLocation != null) {
+            // Remove the old piece from the board
             removePiece(prevLocation);
+        } else {
+            // Remove the piece from the player's available pieces to place
+            assert(currentStage == GameStage.PLACING);
+            piece = playerPieces.get(player).remove(0);
         }
+
+        // Add the piece to it's new location (unless removing a piece, mill formation sets newLocation=null)
         if (newLocation != null) {
             addPiece(newLocation, piece);
         }
 
-        // Save move history for undo and recalculate the player's stage of the game
+        // Save move history (for undo) and recalculate the player's stage of the game
         history.add(move);
         recalculateGameStage(player);
 

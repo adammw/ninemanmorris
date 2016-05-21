@@ -75,11 +75,14 @@ public class BoardTest {
     public void testPlacingOccupiedLocation() throws Exception {
         internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
 
-        thrown.expect(Board.IllegalMoveException.class);
-        thrown.expectMessage("Board location is occupied");
-
         Move move = new Move(null, "a1");
-        board.performMove(move, players[0], callback);
+        try {
+            board.performMove(move, players[0], callback);
+            fail();
+        } catch(Board.IllegalMoveException e) {
+            assertEquals(e.getMessage(), "Board location is occupied");
+        }
+        assertEquals(8, board.getPiecesRemainingToBePlacedForPlayer(players[0]));
         verifyZeroInteractions(callback);
     }
 
