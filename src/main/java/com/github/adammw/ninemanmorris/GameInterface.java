@@ -71,7 +71,8 @@ public class GameInterface {
         boolean valid;
         do {
             try {
-                switch (board.getStage(player)) {
+                GameStage stage = board.getStage(player);
+                switch (stage) {
                     case PLACING:
                         System.out.println("You have " + board.getPiecesRemainingToBePlacedForPlayer(player) + " pieces remaining to be placed.");
                         System.out.println("Where do you want to place your next piece? (a1 - g7)");
@@ -80,10 +81,13 @@ public class GameInterface {
                         break;
                     case MOVING:
                     case FLYING:
-                        System.out.print("Which piece do you want to move? (a1 - g7): ");
+                        if (stage == GameStage.FLYING) {
+                            System.out.println("You are now able to FLY.");
+                        }
+                        System.out.println("Which piece do you want to move? (a1 - g7) ");
                         printPrompt();
                         fromPosition = new BoardLocation(in.readLine());
-                        System.out.print("Where do you want to move the piece to? (a1 - g7): ");
+                        System.out.println("Where do you want to move the piece to? (a1 - g7) ");
                         printPrompt();
                         toPosition = new BoardLocation(in.readLine());
                         break;
