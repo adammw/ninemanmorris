@@ -215,9 +215,9 @@ public class Board {
             addPiece(newLocation, piece);
         }
 
-        // Save move history (for undo) and recalculate the player's stage of the game
+        // Save move history (for undo)
         history.add(move);
-        recalculateGameStage(player);
+
 
         // Reset allowRemoval flag if it was set (only allow a single move per millFormed callback)
         if (allowRemoval) {
@@ -226,10 +226,10 @@ public class Board {
             allowRemoval = true;
             millFormedCallback.millFormed();
             allowRemoval = false;
-
-            // Recalculate the opponent's game stage as the piece removal may now allow them to fly or lose the game
-            recalculateGameStage(getOpposingPlayer(player));
         }
+
+        // Recalculate each player's game stage
+        recalculateGameStage();
     }
 
     /**
@@ -239,66 +239,7 @@ public class Board {
      * @return
      */
     private boolean isAdjacent(BoardLocation loc1, BoardLocation loc2) {
-        int boardSize = board.length;
-        int midpoint = boardSize / 2;
-        int x = loc1.getX();
-        int y = loc1.getY();
-
-        if (x == loc2.getX()) { // vertical movement
-            // check if next spot in positive direction is the next location,
-            // unless it's d5 (as otherwise it would treat d3 as adjacent)
-            if(x != midpoint || y != (midpoint - 1)) {
-                for (int y2 = y + 1; y2 < boardSize; y2++) {
-                    if (VALID_LOCATIONS[y2][x]) {
-                        if (loc2.getY() == y2) {
-                            return true;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            // check if next spot in negative direction is the next location,
-            // unless it's d3 (as otherwise it would treat d5 as adjacent)
-            if (x != midpoint || y != (midpoint + 1)) {
-                for (int y2 = y - 1; y2 >= 0; y2--) {
-                    if (VALID_LOCATIONS[y2][x]) {
-                        if (loc2.getY() == y2) {
-                            return true;
-                        }
-                        break;
-                    }
-                }
-            }
-        } else if (y == loc2.getY()) { // horizontal movement
-            // check if next spot in positive direction is the next location,
-            // unless it's c4 (as otherwise it would treat e4 as adjacent)
-            if(y != midpoint || x != (midpoint - 1)) {
-                for (int x2 = x + 1; x2 < boardSize; x2++) {
-                    if (VALID_LOCATIONS[y][x2]) {
-                        if (loc2.getX() == x2) {
-                            return true;
-                        }
-                        break;
-                    }
-                }
-            }
-
-            // check if next spot in negative direction is the next location,
-            // unless it's e4 (as otherwise it would treat c4 as adjacent)
-            if (y != midpoint || x != (midpoint + 1)) {
-                for (int x2 = x - 1; x2 >= 0; x2--) {
-                    if (VALID_LOCATIONS[y][x2]) {
-                        if (loc2.getX() == x2) {
-                            return true;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        return false;
+        return checkAdjacentLocations(loc1.getX(), loc1.getY(), (x, y) -> x == loc2.getX() && y == loc2.getY());
     }
 
     /**
@@ -315,27 +256,33 @@ public class Board {
      * Recalculate the game stage for the specified player and update it, if nessicary
      * @param player the player to update the game stage for
      */
-    private void recalculateGameStage(Player player) {
-        GameStage currentStage = getStage(player);
-        switch (currentStage) {
-            case PLACING:
-                // Move to Moving stage when the player has no more pieces to place
-                if (playerPieces.get(player).size() == 0) {
-                    playerStages.put(player, GameStage.MOVING);
-                }
-                break;
-            case MOVING:
-                // Move to flying stage when the player has only 3 pieces left
-                if (numPiecesOnBoardOwnedByPlayer(player) < 4) {
-                    playerStages.put(player, GameStage.FLYING);
-                }
-                break;
-            case FLYING:
-                // The game is over when the player has less than 3 pieces left
-                if (numPiecesOnBoardOwnedByPlayer(player) < 3) {
-                    playerStages.put(player, GameStage.GAME_OVER);
-                }
-                break;
+    private void recalculateGameStage() {
+        for (Player player : players) {
+            switch (getStage(player)) {
+                case PLACING:
+                    // Move to Moving stage when the player has no more pieces to place
+                    if (playerPieces.get(player).size() == 0) {
+                        playerStages.put(player, GameStage.MOVING);
+                    }
+                    break;
+                case MOVING:
+                    // Game is over if the player is 'blocked in' and cannot move
+                    if (!possibleMoves(player)) {
+                        playerStages.put(player, GameStage.GAME_OVER);
+                    }
+
+                    // Move to flying stage when the player has only 3 pieces left
+                    if (numPiecesOnBoardOwnedByPlayer(player) < 4) {
+                        playerStages.put(player, GameStage.FLYING);
+                    }
+                    break;
+                case FLYING:
+                    // The game is over when the player has less than 3 pieces left
+                    if (numPiecesOnBoardOwnedByPlayer(player) < 3) {
+                        playerStages.put(player, GameStage.GAME_OVER);
+                    }
+                    break;
+            }
         }
     }
 
@@ -462,7 +409,7 @@ public class Board {
 
     /**
      * Count the number of pieces that a player has on a board that are currently forming a mill
-     * @param player the player to chec
+     * @param player the player to check
      * @return the number of pieces forming a mill (must be a multiple of 3)
      */
     private int numPiecesInMillsOwnedByPlayer(Player player) {
@@ -476,6 +423,81 @@ public class Board {
             }
         }
         return count;
+    }
+
+    private interface AdjacentLocationComparator {
+        boolean compare(int x, int y);
+    }
+
+    private boolean checkAdjacentLocations(int x, int y, AdjacentLocationComparator comparator) {
+        int boardSize = board.length;
+        int midpoint = boardSize / 2;
+
+        // check vertical movement
+        // check if next spot in positive direction is the next location,
+        // unless it's d5 (as otherwise it would treat d3 as adjacent)
+        if(x != midpoint || y != (midpoint - 1)) {
+            for (int y2 = y + 1; y2 < boardSize; y2++) {
+                if (VALID_LOCATIONS[y2][x]) {
+                    if (comparator.compare(x, y2)) { return true; }
+                    break;
+                }
+            }
+        }
+
+        // check if next spot in negative direction is the next location,
+        // unless it's d3 (as otherwise it would treat d5 as adjacent)
+        if (x != midpoint || y != (midpoint + 1)) {
+            for (int y2 = y - 1; y2 >= 0; y2--) {
+                if (VALID_LOCATIONS[y2][x]) {
+                    if (comparator.compare(x, y2)) { return true; }
+                    break;
+                }
+            }
+        }
+
+        // check horizontal movement
+        // check if next spot in positive direction is the next location,
+        // unless it's c4 (as otherwise it would treat e4 as adjacent)
+        if(y != midpoint || x != (midpoint - 1)) {
+            for (int x2 = x + 1; x2 < boardSize; x2++) {
+                if (VALID_LOCATIONS[y][x2]) {
+                    if (comparator.compare(x2, y)) { return true; }
+                    break;
+                }
+            }
+        }
+
+        // check if next spot in negative direction is the next location,
+        // unless it's e4 (as otherwise it would treat c4 as adjacent)
+        if (y != midpoint || x != (midpoint + 1)) {
+            for (int x2 = x - 1; x2 >= 0; x2--) {
+                if (VALID_LOCATIONS[y][x2]) {
+                    if (comparator.compare(x2, y)) { return true; }
+                    break;
+                }
+            }
+        }
+
+        return false;
+    }
+
+
+    /**
+     * Check if there are possible moves that a player can make
+     * @param player the player to check
+     * @return if the player is able to move their pieces
+     */
+    private boolean possibleMoves(Player player) {
+        for (int y = 0; y < board.length; y++) {
+            for (int x = 0; x < board[y].length; x++) {
+                if (!VALID_LOCATIONS[y][x]) { continue; }
+                Piece piece = getPieceAt(x, y);
+                if (piece == null || piece.getOwner() != player) { continue; }
+                if (checkAdjacentLocations(x, y, (x2, y2) -> getPieceAt(x2, y2) == null)) { return true; }
+            }
+        }
+        return false;
     }
 
     /**

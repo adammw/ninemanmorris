@@ -348,6 +348,31 @@ public class BoardTest {
     }
 
     @Test
+    public void testGameOverIfCantMove() throws Exception {
+        playerStages.put(players[0], GameStage.MOVING);
+        playerStages.put(players[1], GameStage.MOVING);
+
+        // Player 1's pieces
+        internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
+        internalBoard[3][0] = playerPieces.get(players[0]).remove(0);
+        internalBoard[6][0] = playerPieces.get(players[0]).remove(0);
+        internalBoard[3][1] = playerPieces.get(players[0]).remove(0);
+
+        // Player 2's blocking pieces
+        internalBoard[0][3] = playerPieces.get(players[1]).remove(0);
+        internalBoard[1][1] = playerPieces.get(players[1]).remove(0);
+        internalBoard[5][1] = playerPieces.get(players[1]).remove(0);
+        internalBoard[6][3] = playerPieces.get(players[1]).remove(0);
+
+        // Move piece to c3->c4
+        internalBoard[2][2] = playerPieces.get(players[1]).remove(0);
+        board.performMove(new Move("c3","c4"), players[1], callback);
+        verifyZeroInteractions(callback);
+
+        assertEquals(playerStages.get(players[0]), GameStage.GAME_OVER);
+    }
+
+    @Test
     public void testFlying() throws Exception {
         internalBoard[0][0] = playerPieces.get(players[0]).remove(0);
         playerStages.put(players[0], GameStage.FLYING);
